@@ -13,6 +13,6 @@ venv/
 Thumbs.db
 
 # Project-specific data & model outputs
-data/
+# data/
 bankruptcy_model_*.csv
 *.xlsx
