@@ -16,3 +16,9 @@ Thumbs.db
 # data/
 bankruptcy_model_*.csv
 *.xlsx
+results_summary.csv
+results_per_fold.csv
+results/
+results v2/
+visualizations/
+visualizations v2/

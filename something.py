@@ -766,18 +766,18 @@ if __name__ == "__main__":
             "Visualization File": visualization_paths
         })
 
-        results_table.to_csv("bankruptcy_model_comparison_results.csv", index=False)
-        fold_results.to_csv("bankruptcy_model_comparison_fold_results.csv", index=False)
-        results_mean_std_numeric.to_csv("bankruptcy_model_comparison_mean_std_numeric.csv", index=False)
-        results_mean_std_formatted.to_csv("bankruptcy_model_comparison_mean_std_formatted.csv", index=False)
-        best_model_summary.to_csv("bankruptcy_model_best_summary.csv", index=False)
-        ranked_results.to_csv("bankruptcy_model_ranked_results.csv", index=False)
-        overall_ranking.to_csv("bankruptcy_model_overall_ranking.csv", index=False)
-        confusion_summary.to_csv("bankruptcy_model_confusion_summary.csv", index=False)
-        lowest_fnr_summary.to_csv("bankruptcy_model_lowest_fnr_summary.csv", index=False)
-        visualization_index.to_csv("bankruptcy_model_visualization_files.csv", index=False)
+        results_table.to_csv("results/bankruptcy_model_comparison_results.csv", index=False)
+        fold_results.to_csv("results/bankruptcy_model_comparison_fold_results.csv", index=False)
+        results_mean_std_numeric.to_csv("results/bankruptcy_model_comparison_mean_std_numeric.csv", index=False)
+        results_mean_std_formatted.to_csv("results/bankruptcy_model_comparison_mean_std_formatted.csv", index=False)
+        best_model_summary.to_csv("results/bankruptcy_model_best_summary.csv", index=False)
+        ranked_results.to_csv("results/bankruptcy_model_ranked_results.csv", index=False)
+        overall_ranking.to_csv("results/bankruptcy_model_overall_ranking.csv", index=False)
+        confusion_summary.to_csv("results/bankruptcy_model_confusion_summary.csv", index=False)
+        lowest_fnr_summary.to_csv("results/bankruptcy_model_lowest_fnr_summary.csv", index=False)
+        visualization_index.to_csv("results/bankruptcy_model_visualization_files.csv", index=False)
         export_results_to_excel(
-            "bankruptcy_model_comparison_results.xlsx",
+            "results/bankruptcy_model_comparison_results.xlsx",
             {
                 "Mean CV Results": results_table,
                 "Fold Results": fold_results,
