@@ -1,3 +1,4 @@
+import argparse
 import os
 import pandas as pd
 import numpy as np
@@ -370,9 +371,18 @@ def save_fnr_visualization(df_results, output_dir="visualizations"):
     return output_path
 
 
+def ensure_output_dir(path):
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
 # ========== 5. Main Experiment Loop ==========
-def run_experiment_per_year(file_path):
-    datasets_dict = process_turkish_panel_data(file_path, max_horizon=3)
+def run_experiment_per_year(file_path, max_horizon=3, min_year=2021):
+    datasets_dict = process_turkish_panel_data(
+        file_path,
+        max_horizon=max_horizon,
+        min_year=min_year,
+    )
     all_results = []
 
     models = {
@@ -492,19 +502,65 @@ def run_experiment_per_year(file_path):
     return df_results, df_fold_results
 
 
-# ========== 6. Run ==========
-if __name__ == "__main__":
-    # Ensure this matches your local directory structure
-    FILE_PATH = "data v2/financial_data.csv"   
-    
-    df_results, df_fold_results = run_experiment_per_year(FILE_PATH)
+def build_arg_parser():
+    parser = argparse.ArgumentParser(
+        description="Train bankruptcy prediction models and save results/plots."
+    )
+    parser.add_argument(
+        "--input-file",
+        default=os.path.join("data v2", "financial_data.csv"),
+        help="Path to the input CSV file.",
+    )
+    parser.add_argument(
+        "--results-dir",
+        default="results v2",
+        help="Directory where CSV outputs will be saved.",
+    )
+    parser.add_argument(
+        "--visualizations-dir",
+        default="visualizations v2",
+        help="Directory where plots will be saved.",
+    )
+    parser.add_argument(
+        "--min-year",
+        type=int,
+        default=2021,
+        help="Minimum year to keep from the dataset.",
+    )
+    parser.add_argument(
+        "--max-horizon",
+        type=int,
+        default=3,
+        help="Maximum prediction horizon to generate.",
+    )
+    return parser
+
+
+def main():
+    args = build_arg_parser().parse_args()
+
+    ensure_output_dir(args.results_dir)
+    ensure_output_dir(args.visualizations_dir)
+
+    df_results, df_fold_results = run_experiment_per_year(
+        args.input_file,
+        max_horizon=args.max_horizon,
+        min_year=args.min_year,
+    )
 
     print("\n\n========== FINAL AGGREGATED RESULTS ==========")
     print(df_results.to_string(index=False))
 
-    df_results.to_csv("results v2/results_summary.csv", index=False)
-    df_fold_results.to_csv("results v2/results_per_fold.csv", index=False)
-    print("\n[+] Results saved to results_summary.csv and results_per_fold.csv")
+    results_summary_path = os.path.join(args.results_dir, "results_summary.csv")
+    results_fold_path = os.path.join(args.results_dir, "results_per_fold.csv")
+    df_results.to_csv(results_summary_path, index=False)
+    df_fold_results.to_csv(results_fold_path, index=False)
+    print(f"\n[+] Results saved to {results_summary_path} and {results_fold_path}")
 
-    save_performance_visualization(df_results, "visualizations v2")
-    save_fnr_visualization(df_results, "visualizations v2")
+    save_performance_visualization(df_results, args.visualizations_dir)
+    save_fnr_visualization(df_results, args.visualizations_dir)
+
+
+# ========== 6. Run ==========
+if __name__ == "__main__":
+    main()

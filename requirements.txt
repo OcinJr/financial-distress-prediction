@@ -7,5 +7,4 @@ scikit-learn
 imbalanced-learn
 xgboost
 lightgbm
-ipython
 openpyxl
