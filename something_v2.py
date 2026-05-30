@@ -271,14 +271,9 @@ def calculate_metrics_at_threshold(y_true, y_prob, threshold):
     fnr = fn / (fn + tp) if (fn + tp) > 0 else 0.0
 
     return {
-        "Accuracy":              accuracy_score(y_true, y_pred),
-        "Precision":             precision_score(y_true, y_pred, zero_division=0),
         "Recall (Sensitivity)":  recall_score(y_true, y_pred, zero_division=0),
         "FNR (False Neg Rate)":  fnr,  # <--- Added FNR Metric here
-        "F1-Score":              f1_score(y_true, y_pred, zero_division=0),
-        "AUC-ROC":               roc_auc_score(y_true, y_prob),
         "PR-AUC":                average_precision_score(y_true, y_prob),
-        "Balanced Accuracy":     balanced_accuracy_score(y_true, y_pred),
         "MCC":                   matthews_corrcoef(y_true, y_pred),
         "TN": tn, "FP": fp, "FN": fn, "TP": tp,
     }
@@ -307,11 +302,13 @@ def save_performance_visualization(df_results, output_dir="visualizations"):
     )
 
     metrics = [
-        "Accuracy", "Precision", "Recall (Sensitivity)", "FNR (False Neg Rate)",
-        "F1-Score", "AUC-ROC", "PR-AUC", "MCC"
+        "Recall (Sensitivity)",
+        "FNR (False Neg Rate)",
+        "PR-AUC",
+        "MCC",
     ]
     
-    fig, axes = plt.subplots(2, 4, figsize=(24, 10), sharey=False)
+    fig, axes = plt.subplots(2, 2, figsize=(16, 10), sharey=False)
     axes = axes.flatten()
 
     for ax, metric in zip(axes, metrics):
@@ -462,7 +459,7 @@ def run_experiment_per_year(file_path):
                 # Print FNR to terminal output
                 print(
                     f"      Threshold: {best_threshold:.2f} | "
-                    f"AUC-ROC: {fold_metrics['AUC-ROC']:.4f} | "
+                    f"Recall: {fold_metrics['Recall (Sensitivity)']:.4f} | "
                     f"PR-AUC: {fold_metrics['PR-AUC']:.4f} | "
                     f"FNR: {fold_metrics['FNR (False Neg Rate)']:.4f} | "
                     f"MCC: {fold_metrics['MCC']:.4f}"
@@ -471,8 +468,10 @@ def run_experiment_per_year(file_path):
     df_fold_results = pd.DataFrame(all_results)
 
     metric_columns = [
-        "Accuracy", "Precision", "Recall (Sensitivity)", "FNR (False Neg Rate)",
-        "F1-Score", "AUC-ROC", "PR-AUC", "Balanced Accuracy", "MCC",
+        "Recall (Sensitivity)",
+        "FNR (False Neg Rate)",
+        "PR-AUC",
+        "MCC",
     ]
     aggregation = {m: "mean" for m in metric_columns}
     aggregation.update({
