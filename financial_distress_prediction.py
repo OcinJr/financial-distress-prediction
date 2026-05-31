@@ -113,20 +113,20 @@ def process_turkish_panel_data(file_path, max_horizon=2, min_year=2021):
             f"Please check your CSV headers."
         )
 
-    # FIX 1: Keep annual reports only
+    # Keep annual reports only
     df = df[df[PERIOD_COL] == "Yıllık"].copy()
     print(f"[*] Rows after annual filter: {len(df)}")
 
-    # FIX 2: Keep data from min_year onward
+    # Keep data from min_year onward
     df[YEAR_COL] = pd.to_numeric(df[YEAR_COL], errors="coerce")
     df = df[df[YEAR_COL] >= min_year].copy()
     print(f"[*] Rows after {min_year}+ filter: {len(df)}")
 
-    # FIX 3: Translate column names to English
+    # Translate column names to English
     df.rename(columns=COLUMN_TRANSLATIONS, inplace=True)
     print(f"[*] Columns translated to English.")
 
-    # FIX 4: Translate target label values to English
+    # Translate target label values to English
     df["Audit Opinion"] = df["Audit Opinion"].map(TARGET_LABEL_TRANSLATIONS)
 
     # Binarize Audit Opinion: Unqualified = 0 (healthy), everything else = 1 (distressed)
@@ -156,10 +156,7 @@ def process_turkish_panel_data(file_path, max_horizon=2, min_year=2021):
         )
         horizon_df = horizon_df.dropna(subset=[target_col_name])
 
-        # ========================================================
-        # BUG FIX: Target Leakage removed. The target_col_name 
-        # is explicitly dropped so models cannot cheat.
-        # ========================================================
+        # Drop features that could cause target leakage
         columns_to_drop = [
             "Company Name", "Company Code", "Period",
             "Year", "Audit Opinion", "class", target_col_name
@@ -273,7 +270,7 @@ def calculate_metrics_at_threshold(y_true, y_prob, threshold):
 
     return {
         "Recall (Sensitivity)":  recall_score(y_true, y_pred, zero_division=0),
-        "FNR (False Neg Rate)":  fnr,  # <--- Added FNR Metric here
+        "FNR (False Neg Rate)":  fnr,
         "PR-AUC":                average_precision_score(y_true, y_prob),
         "MCC":                   matthews_corrcoef(y_true, y_pred),
         "TN": tn, "FP": fp, "FN": fn, "TP": tp,
@@ -491,7 +488,7 @@ def run_experiment_per_year(file_path, max_horizon=3, min_year=2021):
                     **fold_metrics,
                 })
 
-                # Print FNR to terminal output
+                # Print fold results to console
                 print(
                     f"      Threshold: {best_threshold:.2f} | "
                     f"Recall: {fold_metrics['Recall (Sensitivity)']:.4f} | "
