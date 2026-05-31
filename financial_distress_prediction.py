@@ -113,20 +113,20 @@ def process_turkish_panel_data(file_path, max_horizon=2, min_year=2021):
             f"Please check your CSV headers."
         )
 
-    # FIX 1: Keep annual reports only
+    # Keep annual reports only
     df = df[df[PERIOD_COL] == "Yıllık"].copy()
     print(f"[*] Rows after annual filter: {len(df)}")
 
-    # FIX 2: Keep data from min_year onward
+    # Keep data from min_year onward
     df[YEAR_COL] = pd.to_numeric(df[YEAR_COL], errors="coerce")
     df = df[df[YEAR_COL] >= min_year].copy()
     print(f"[*] Rows after {min_year}+ filter: {len(df)}")
 
-    # FIX 3: Translate column names to English
+    # Translate column names to English
     df.rename(columns=COLUMN_TRANSLATIONS, inplace=True)
     print(f"[*] Columns translated to English.")
 
-    # FIX 4: Translate target label values to English
+    # Translate target label values to English
     df["Audit Opinion"] = df["Audit Opinion"].map(TARGET_LABEL_TRANSLATIONS)
 
     # Binarize Audit Opinion: Unqualified = 0 (healthy), everything else = 1 (distressed)
@@ -156,16 +156,13 @@ def process_turkish_panel_data(file_path, max_horizon=2, min_year=2021):
         )
         horizon_df = horizon_df.dropna(subset=[target_col_name])
 
-        # ========================================================
-        # BUG FIX: Target Leakage removed. The target_col_name 
-        # is explicitly dropped so models cannot cheat.
-        # ========================================================
+        # Drop features that could cause target leakage
         columns_to_drop = [
             "Company Name", "Company Code", "Period",
             "Year", "Audit Opinion", "class", target_col_name
         ]
         
-        object_cols = horizon_df.select_dtypes(include=["object"]).columns
+        object_cols = horizon_df.select_dtypes(include=["object", "string"]).columns
         columns_to_drop.extend([c for c in object_cols if c not in columns_to_drop])
 
         X = horizon_df.drop(columns=columns_to_drop, errors="ignore")
@@ -273,7 +270,7 @@ def calculate_metrics_at_threshold(y_true, y_prob, threshold):
 
     return {
         "Recall (Sensitivity)":  recall_score(y_true, y_pred, zero_division=0),
-        "FNR (False Neg Rate)":  fnr,  # <--- Added FNR Metric here
+        "FNR (False Neg Rate)":  fnr,
         "PR-AUC":                average_precision_score(y_true, y_prob),
         "MCC":                   matthews_corrcoef(y_true, y_pred),
         "TN": tn, "FP": fp, "FN": fn, "TP": tp,
@@ -302,35 +299,60 @@ def save_performance_visualization(df_results, output_dir="visualizations"):
         ordered=True
     )
 
-    metrics = [
-        "Recall (Sensitivity)",
-        "FNR (False Neg Rate)",
-        "PR-AUC",
-        "MCC",
-    ]
+    saved_paths = []
     
-    fig, axes = plt.subplots(2, 2, figsize=(16, 10), sharey=False)
-    axes = axes.flatten()
-
-    for ax, metric in zip(axes, metrics):
+    # 1. Save Recall and PR-AUC separately
+    separate_metrics = ["Recall (Sensitivity)", "PR-AUC"]
+    for metric in separate_metrics:
+        fig, ax = plt.subplots(figsize=(10, 6))
         sns.barplot(
             data=plot_df, x="Model", y=metric, hue="Horizon", ax=ax
         )
-        ax.set_title(metric)
+        ax.set_title(f"Model Comparison - {metric}", fontsize=14, fontweight="bold")
         ax.set_xlabel("")
         ax.set_ylabel(metric)
         ax.tick_params(axis="x", rotation=20)
         ax.legend(title="Horizon", loc="best")
+        fig.tight_layout()
 
-    fig.suptitle("Model Performance Comparison Across Horizons", fontsize=16)
-    fig.tight_layout(rect=[0, 0, 1, 0.96])
+        safe_name = make_safe_filename(metric)
+        output_path = os.path.join(output_dir, f"{safe_name}.png")
+        fig.savefig(output_path, dpi=300, bbox_inches="tight")
+        plt.close(fig)
+        
+        print(f"[+] Performance graph saved to: {output_path}")
+        saved_paths.append(output_path)
 
-    output_path = os.path.join(output_dir, f"{make_safe_filename('model performance comparison')}.png")
+    # 2. Save FNR and MCC combined (one on top of the other)
+    fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(10, 10), sharex=True)
+    
+    # Top subplot: FNR
+    sns.barplot(
+        data=plot_df, x="Model", y="FNR (False Neg Rate)", hue="Horizon", ax=ax1
+    )
+    ax1.set_title("Model Comparison - FNR (False Neg Rate)", fontsize=12, fontweight="bold")
+    ax1.set_ylabel("FNR")
+    ax1.legend(title="Horizon", loc="best")
+    
+    # Bottom subplot: MCC
+    sns.barplot(
+        data=plot_df, x="Model", y="MCC", hue="Horizon", ax=ax2
+    )
+    ax2.set_title("Model Comparison - MCC", fontsize=12, fontweight="bold")
+    ax2.set_ylabel("MCC")
+    ax2.tick_params(axis="x", rotation=20)
+    ax2.legend(title="Horizon", loc="best")
+    
+    fig.tight_layout()
+    
+    output_path = os.path.join(output_dir, "fnr_mcc_comparison.png")
     fig.savefig(output_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
-
-    print(f"[+] Performance graph saved to: {output_path}")
-    return output_path
+    
+    print(f"[+] Combined FNR and MCC graph saved to: {output_path}")
+    saved_paths.append(output_path)
+        
+    return saved_paths
 
 
 def save_fnr_visualization(df_results, output_dir="visualizations"):
@@ -466,7 +488,7 @@ def run_experiment_per_year(file_path, max_horizon=3, min_year=2021):
                     **fold_metrics,
                 })
 
-                # Print FNR to terminal output
+                # Print fold results to console
                 print(
                     f"      Threshold: {best_threshold:.2f} | "
                     f"Recall: {fold_metrics['Recall (Sensitivity)']:.4f} | "
@@ -508,17 +530,17 @@ def build_arg_parser():
     )
     parser.add_argument(
         "--input-file",
-        default=os.path.join("data v2", "financial_data.csv"),
+        default=os.path.join("data", "financial_data.csv"),
         help="Path to the input CSV file.",
     )
     parser.add_argument(
         "--results-dir",
-        default="results v2",
+        default="results",
         help="Directory where CSV outputs will be saved.",
     )
     parser.add_argument(
         "--visualizations-dir",
-        default="visualizations v2",
+        default="visualizations",
         help="Directory where plots will be saved.",
     )
     parser.add_argument(
@@ -537,7 +559,9 @@ def build_arg_parser():
 
 
 def main():
-    args = build_arg_parser().parse_args()
+    import sys
+    is_jupyter = 'ipykernel' in sys.modules or 'google.colab' in sys.modules
+    args = build_arg_parser().parse_args(args=[] if is_jupyter else None)
 
     ensure_output_dir(args.results_dir)
     ensure_output_dir(args.visualizations_dir)
@@ -553,9 +577,15 @@ def main():
 
     results_summary_path = os.path.join(args.results_dir, "results_summary.csv")
     results_fold_path = os.path.join(args.results_dir, "results_per_fold.csv")
+    results_thresholds_path = os.path.join(args.results_dir, "results_thresholds.csv")
     df_results.to_csv(results_summary_path, index=False)
     df_fold_results.to_csv(results_fold_path, index=False)
-    print(f"\n[+] Results saved to {results_summary_path} and {results_fold_path}")
+    
+    # Save thresholds separately
+    df_thresholds = df_results[["Horizon", "Model", "Best Threshold", "Validation MCC"]].copy()
+    df_thresholds.to_csv(results_thresholds_path, index=False)
+    
+    print(f"\n[+] Results saved to:\n  - Summary: {results_summary_path}\n  - Folds: {results_fold_path}\n  - Thresholds: {results_thresholds_path}")
 
     save_performance_visualization(df_results, args.visualizations_dir)
     save_fnr_visualization(df_results, args.visualizations_dir)
