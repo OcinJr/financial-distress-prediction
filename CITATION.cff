@@ -3,7 +3,7 @@ message: "If you use this software, please cite it as below."
 authors:
   - family-names: "Febrianto"
     given-names: "Nico"
-title: "Financial Distress & Bankruptcy Prediction"
+title: "Financial Distress Prediction"
 version: 1.0.0
 date-released: 2026-05-31
 url: "https://github.com/OcinJr/financial-distress-prediction"
