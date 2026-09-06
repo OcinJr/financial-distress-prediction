@@ -3,7 +3,14 @@ message: "If you use this software, please cite it as below."
 authors:
   - family-names: "Febrianto"
     given-names: "Nico"
-title: "Financial Distress Prediction"
-version: 1.0.0
-date-released: 2026-05-31
+  - family-names: "Ibrahim"
+    given-names: "Irma"
+  - family-names: "Kurniawan"
+    given-names: "Nathaniel"
+  - family-names: "Michael"
+    given-names: "Marvel"
+title: "Decision Threshold Stability in Multi-Horizon Financial Distress Prediction on Imbalanced Turkish Firms"
+version: 2.0.0
+date-released: 2026-09-06
+license: MIT
 url: "https://github.com/OcinJr/financial-distress-prediction"

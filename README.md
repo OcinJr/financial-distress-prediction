@@ -1,4 +1,7 @@
-# Financial Distress & Bankruptcy Prediction Experiment
+# Decision Threshold Stability in Multi-Horizon Financial Distress Prediction
+
+Analysis code for the paper *Decision Threshold Stability in Multi-Horizon Financial
+Distress Prediction on Imbalanced Turkish Firms*.
 
 This project trains multiple classifiers on annual financial statement data from Borsa
 İstanbul companies and evaluates them across 1-, 2- and 3-year prediction horizons. The

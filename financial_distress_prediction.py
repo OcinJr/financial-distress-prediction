@@ -674,7 +674,7 @@ def run_experiment_per_year(file_path, max_horizon=3, min_year=2015):
 
 def build_arg_parser():
     parser = argparse.ArgumentParser(
-        description="Train bankruptcy prediction models and save results/plots."
+        description="Train financial distress prediction models and save results/plots."
     )
     parser.add_argument(
         "--input-file",
